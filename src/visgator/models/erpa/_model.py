@@ -64,7 +64,9 @@ class Model(_Model[BBoxes]):
         )
         img_tensor = images.tensor / 255.0
         images = Nested4DTensor(img_tensor, images.sizes, images.mask)
-        detections = self._detector((batch, images), (self._model, self._tokenizer))
+        detections = self._detector(
+            images, [sample.caption for sample in batch.samples]
+        )
 
         # CLIP encoded img+text
         img_embeddings = self._vision(images)
