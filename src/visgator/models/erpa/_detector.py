@@ -62,7 +62,7 @@ class Detector(nn.Module):
 
         detections: list[DetectionResults] = [None] * B  # type: ignore
         for sample_idx in range(B):
-            mask = masks[i]
+            mask = masks[sample_idx]
             detected_boxes = pred_boxes[sample_idx, mask]
             logits = pred_logits[sample_idx, mask] > self._text_threshold
             tokenized = self._gdino.tokenizer(sentences[sample_idx])
@@ -78,7 +78,9 @@ class Detector(nn.Module):
 
             indexes = []
             boxes = []
+            height, width = images.sizes[sample_idx]
 
+            # If detector identifies some entities and these match 
             for entity_idx, entity in enumerate(entities[sample_idx]):
                 matching_key = None
                 for key in detected_entities.keys():
@@ -92,8 +94,16 @@ class Detector(nn.Module):
                     pass
                     #raise RuntimeError(f"Entity {entity} not detected.")
 
+            # Otherwise (no matching entities) => whole image as bounding box
+            if len(boxes) == 0:
+                # check this
+                for entity_idx, entity in enumerate(entities[sample_idx]):
+                    indexes.append(entity_idx)
+                    boxes.append(torch.tensor([0, 0, width-1, height-1]).to(images._tensor.device))
+
+
             detections[sample_idx] = DetectionResults(
-                entities=torch.tensor(indexes, device=boxes[0].device),
+                entities=torch.tensor(indexes, device=images._tensor.device),
                 boxes=BBoxes(
                     boxes=torch.stack(boxes),
                     images_size=images.sizes[sample_idx],
