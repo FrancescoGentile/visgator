@@ -78,7 +78,6 @@ class Detector(nn.Module):
 
             indexes = []
             boxes = []
-            height, width = images.sizes[sample_idx]
 
             # If detector identifies some entities and these match 
             for entity_idx, entity in enumerate(entities[sample_idx]):
@@ -95,12 +94,12 @@ class Detector(nn.Module):
                     #raise RuntimeError(f"Entity {entity} not detected.")
 
             # Otherwise (no matching entities) => whole image as bounding box
+            # height, width = images.sizes[sample_idx]
             if len(boxes) == 0:
                 # check this
                 for entity_idx, entity in enumerate(entities[sample_idx]):
                     indexes.append(entity_idx)
-                    boxes.append(torch.tensor([0, 0, width-1, height-1]).to(images._tensor.device))
-
+                    boxes.append(torch.tensor([0.5, 0.5, .49, .49]).to(images._tensor.device))
 
             detections[sample_idx] = DetectionResults(
                 entities=torch.tensor(indexes, device=images._tensor.device),
